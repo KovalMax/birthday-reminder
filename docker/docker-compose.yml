@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+
+  persistence:
+    image: mongo:4.2-bionic
+    environment:
+      MONGO_DATA_DIR: /data/db
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PWD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
+    volumes:
+      - storage:/data/db:rw
+    ports:
+      - 27047:27017
+    networks:
+      - app-network
+    command: mongod --auth --dbpath=/data/db --bind_ip 0.0.0.0
+
+  backend:
+    build:
+      context: php
+    environment:
+      PHP_IDE_CONFIG: ${PHP_IDE_CONFIG}
+      MONGO_DB_NAME: ${MONGO_DB_NAME}
+      MONGO_ROOT_USER: ${MONGO_ROOT_USER}
+      MONGO_ROOT_PWD: ${MONGO_ROOT_PWD}
+    depends_on:
+      - persistence
+    volumes:
+      - ../:/var/www
+    networks:
+      - app-network
+
+  webserver:
+    build:
+      context: nginx
+      args:
+        SERVER_NAME: ${SERVER_NAME}
+    ports:
+      - 8019:8081
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+volumes:
+  storage:

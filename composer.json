@@ -1,0 +1,35 @@
+{
+    "name": "max/birthdays-reminder",
+    "description": "home task",
+    "require": {
+        "php": "^8.0",
+        "jenssegers/mongodb": "^3.8",
+        "laravel/lumen-framework": "^8.0"
+    },
+    "require-dev": {
+        "fakerphp/faker": "^1.9.1",
+        "mockery/mockery": "^1.3.1",
+        "phpunit/phpunit": "^9.3"
+    },
+    "autoload": {
+        "classmap": ["database"],
+        "psr-4": {
+            "BirthdayReminder\\": "app"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests"
+        }
+    },
+    "config": {
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "tests": ["@php ./vendor/bin/phpunit -c phpunit.xml"]
+    }
+}
