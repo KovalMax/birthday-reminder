@@ -7,8 +7,8 @@ namespace BirthdayReminder\Person\Service;
 use BirthdayReminder\Person\Http\Response\PersonResponse;
 use BirthdayReminder\Person\Model\BirthdayInterval;
 use BirthdayReminder\Person\Model\Person;
-use DateTime;
 use DateTimeInterface;
+use DateTimeZone;
 use Exception;
 
 use function sprintf;
@@ -29,8 +29,9 @@ final class PersonResponseTransformer
      */
     public function transform(Person $person, ?DateTimeInterface $calculateFrom = null): PersonResponse
     {
-        $interval = $this->birthdayCalculator->calculateBirthdayInterval($person->birthday, $calculateFrom);
-        $reminder = $this->buildReminder($person->name, $person->timezone, $interval, $calculateFrom);
+        $timezoneBirthday = $person->birthdayWithTimezone();
+        $interval = $this->birthdayCalculator->calculateBirthdayInterval($timezoneBirthday, $calculateFrom);
+        $reminder = $this->buildReminder($person->name, $timezoneBirthday->getTimezone(), $interval, $calculateFrom);
 
         return new PersonResponse(
             $person->name,
@@ -46,7 +47,7 @@ final class PersonResponseTransformer
      */
     private function buildReminder(
         string $name,
-        string $timezone,
+        DateTimeZone $timezone,
         BirthdayInterval $interval,
         ?DateTimeInterface $calculateFrom = null
     ): string {
@@ -55,8 +56,8 @@ final class PersonResponseTransformer
                 self::BIRTHDAY_REMINDER_TEMPLATE . self::TODAY_PART,
                 $name,
                 $interval->age(),
-                $this->birthdayCalculator->hoursUntilTheEndOfDay($calculateFrom),
-                $timezone
+                $this->birthdayCalculator->hoursUntilTheEndOfDay($timezone, $calculateFrom),
+                $timezone->getName()
             ),
             false => $this->renderMessage(
                 self::BIRTHDAY_REMINDER_TEMPLATE . self::UPCOMING_PART,
@@ -64,7 +65,7 @@ final class PersonResponseTransformer
                 $interval->age(),
                 $interval->months(),
                 $interval->days(),
-                $timezone
+                $timezone->getName()
             )
         };
     }

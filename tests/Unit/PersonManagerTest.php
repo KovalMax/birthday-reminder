@@ -15,6 +15,8 @@ use BirthdayReminder\Person\Service\BirthdayCalculator;
 use BirthdayReminder\Person\Service\PersonResponseTransformer;
 use DateTime;
 use DateTimeInterface;
+use DateTimeZone;
+use Exception;
 use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -41,69 +43,75 @@ final class PersonManagerTest extends TestCase
             ->andReturn($this->createMock(\Illuminate\Validation\Validator::class));
     }
 
+    /** @throws Exception */
     public function getPersonListDataProvider(): iterable
     {
         $request = PaginationRequest::fromInput([]);
-        $person = Person::create('Joe', 'Europe/Kiev', '1990-01-30');
-        $listPersons = [$person];
-        $countPersons = count($listPersons);
+        foreach (['Europe/Kiev', 'America/New_York', 'Pacific/Fiji'] as $timezone) {
+            $person = Person::create('Joe', $timezone, '1990-01-30');
+            $listPersons = [$person];
+            $countPersons = count($listPersons);
 
-        yield '5 days until birthday' => [
-            'request' => $request,
-            'listPersons' => $listPersons,
-            'countPersons' => $countPersons,
-            'calculateFrom' => new DateTime('2000-01-25'),
-            'expectedResult' => new PersonListResponse(
-                1,
-                1,
-                new PersonResponse(
-                    $person->name,
-                    $person->birthday->format('Y-m-d'),
-                    $person->timezone,
-                    'Joe is 9 years old in 0 months, 5 days in Europe/Kiev',
-                    new BirthdayInterval(0, 5, 9)
-                )
-            ),
-        ];
+            yield "5 days until birthday, timezone: $timezone" => [
+                'request' => $request,
+                'listPersons' => $listPersons,
+                'countPersons' => $countPersons,
+                'calculateFrom' => new DateTime('2000-01-25', new DateTimeZone($timezone)),
+                'expectedResult' => new PersonListResponse(
+                    $countPersons,
+                    1,
+                    new PersonResponse(
+                        $person->name,
+                        $person->birthday->format('Y-m-d'),
+                        $person->timezone,
+                        "Joe is 9 years old in 0 months, 5 days in $timezone",
+                        new BirthdayInterval(0, 5, 9)
+                    )
+                ),
+            ];
 
-        yield '5 hours until the end of the birthday' => [
-            'request' => $request,
-            'listPersons' => $listPersons,
-            'countPersons' => $countPersons,
-            'calculateFrom' => new DateTime('2000-01-30 19:00:00'),
-            'expectedResult' => new PersonListResponse(
-                1,
-                1,
-                new PersonResponse(
-                    $person->name,
-                    $person->birthday->format('Y-m-d'),
-                    $person->timezone,
-                    'Joe is 10 years old today (5 hours remaining in Europe/Kiev)',
-                    new BirthdayInterval(0, 0, 10)
-                )
-            ),
-        ];
+            yield "5 hours until the end of the birthday, timezone: $timezone" => [
+                'request' => $request,
+                'listPersons' => $listPersons,
+                'countPersons' => $countPersons,
+                'calculateFrom' => new DateTime('2000-01-30 19:00:00', new DateTimeZone($timezone)),
+                'expectedResult' => new PersonListResponse(
+                    $countPersons,
+                    1,
+                    new PersonResponse(
+                        $person->name,
+                        $person->birthday->format('Y-m-d'),
+                        $person->timezone,
+                        "Joe is 10 years old today (5 hours remaining in $timezone)",
+                        new BirthdayInterval(0, 0, 10)
+                    )
+                ),
+            ];
 
-        yield 'birthday next year' => [
-            'request' => $request,
-            'listPersons' => $listPersons,
-            'countPersons' => $countPersons,
-            'calculateFrom' => new DateTime('2000-01-31'),
-            'expectedResult' => new PersonListResponse(
-                1,
-                1,
-                new PersonResponse(
-                    $person->name,
-                    $person->birthday->format('Y-m-d'),
-                    $person->timezone,
-                    'Joe is 10 years old in 11 months, 30 days in Europe/Kiev',
-                    new BirthdayInterval(11, 30, 10)
-                )
-            ),
-        ];
+            yield "birthday next year, timezone: $timezone" => [
+                'request' => $request,
+                'listPersons' => $listPersons,
+                'countPersons' => $countPersons,
+                'calculateFrom' => new DateTime('2000-01-31', new DateTimeZone($timezone)),
+                'expectedResult' => new PersonListResponse(
+                    $countPersons,
+                    1,
+                    new PersonResponse(
+                        $person->name,
+                        $person->birthday->format('Y-m-d'),
+                        $person->timezone,
+                        "Joe is 10 years old in 11 months, 30 days in $timezone",
+                        new BirthdayInterval(11, 30, 10)
+                    )
+                ),
+            ];
+        }
     }
 
-    /** @dataProvider getPersonListDataProvider */
+    /**
+     * @dataProvider getPersonListDataProvider
+     * @throws Exception
+     */
     public function testGetPersonList(
         PaginationRequest $request,
         array $listPersons,

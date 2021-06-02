@@ -2,7 +2,17 @@
 POST localhost:8019/api/persons
 Content-Type: application/json
 
-{"name":  "George", "timezone":  "Europe/Kiev", "birthday":  "01-06-1987"}
+{"name":  "George", "timezone":  "America/New_York", "birthday":  "03-06-1987"}
 ###
 # Get list with pagination
 GET localhost:8019/api/persons?page=1&limit=100
+
+###
+
+//Different time zones for creation
+//UTC+12
+//{"name":  "George", "timezone":  "Pacific/Fiji", "birthday":  "03-06-1987"}
+//UTC-4 during daylight
+//{"name":  "George", "timezone":  "America/New_York", "birthday":  "03-06-1987"}
+//UTC+3 during daylight
+//{"name":  "George", "timezone":  "Europe/Kiev", "birthday":  "03-06-1987"}

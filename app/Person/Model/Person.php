@@ -6,6 +6,7 @@ namespace BirthdayReminder\Person\Model;
 
 use DateTime;
 use DateTimeInterface;
+use DateTimeZone;
 use Exception;
 use Jenssegers\Mongodb\Eloquent\Model;
 
@@ -30,5 +31,11 @@ class Person extends Model
         $model->birthday = new DateTime($birthday);
 
         return $model;
+    }
+
+    /** @throws Exception */
+    public function birthdayWithTimezone(): DateTimeInterface
+    {
+        return new DateTime($this->birthday->format('Y-m-d'), new DateTimeZone($this->timezone));
     }
 }
