@@ -8,4 +8,4 @@
 - **`make run-tests` - execute tests inside backend container(don't forget to get them up with all related stuff)**
 - **`make help` - to see full list of commands**
 
-#### Enjoy :)
+#### Enjoy!
