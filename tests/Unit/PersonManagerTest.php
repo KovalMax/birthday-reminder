@@ -12,6 +12,7 @@ use BirthdayReminder\Person\Model\BirthdayInterval;
 use BirthdayReminder\Person\Model\Person;
 use BirthdayReminder\Person\Repository\PersonRepository;
 use BirthdayReminder\Person\Service\BirthdayCalculator;
+use BirthdayReminder\Person\Service\IClock;
 use BirthdayReminder\Person\Service\PersonResponseTransformer;
 use DateTime;
 use DateTimeInterface;
@@ -21,12 +22,11 @@ use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-use function count;
-
 final class PersonManagerTest extends TestCase
 {
     private PersonRepository|MockObject $repository;
     private PersonManager $manager;
+    private IClock|MockObject $clock;
 
     public function __construct(?string $name = null, array $data = [], $dataName = '')
     {
@@ -131,7 +131,13 @@ final class PersonManagerTest extends TestCase
             ->with()
             ->willReturn($countPersons);
 
-        $testCaseResult = $this->manager->getPersonList($request, $calculateFrom);
+        $this->clock
+            ->expects($this->any())
+            ->method('now')
+            ->with($calculateFrom->getTimezone())
+            ->willReturn($calculateFrom);
+
+        $testCaseResult = $this->manager->listPersons($request);
 
         $this->assertEquals($expectedResult, $testCaseResult);
     }
@@ -141,9 +147,10 @@ final class PersonManagerTest extends TestCase
         parent::setUp();
 
         $this->repository = $this->createMock(PersonRepository::class);
+        $this->clock = $this->createMock(IClock::class);
         $this->manager = new PersonManager(
             $this->repository,
-            new PersonResponseTransformer(new BirthdayCalculator())
+            new PersonResponseTransformer(new BirthdayCalculator($this->clock))
         );
     }
 }

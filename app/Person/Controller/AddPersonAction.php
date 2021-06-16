@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace BirthdayReminder\Person\Controller;
 
 use BirthdayReminder\Person\Http\Request\AddPersonRequest;
-use BirthdayReminder\Person\Manager\PersonManagerInterface;
+use BirthdayReminder\Person\Manager\IPersonManager;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class AddPersonAction
 {
-    public function __construct(private PersonManagerInterface $manager)
+    public function __construct(private IPersonManager $manager)
     {
     }
 

@@ -10,21 +10,18 @@ use BirthdayReminder\Person\Http\Response\PersonListResponse;
 use BirthdayReminder\Person\Model\Person;
 use BirthdayReminder\Person\Repository\PersonRepository;
 use BirthdayReminder\Person\Service\PersonResponseTransformer;
-use DateTimeInterface;
 
-final class PersonManager implements PersonManagerInterface
+final class PersonManager implements IPersonManager
 {
     public function __construct(private PersonRepository $repository, private PersonResponseTransformer $transformer)
     {
     }
 
-    public function getPersonList(
-        PaginationRequest $request,
-        ?DateTimeInterface $calculateFrom = null
-    ): PersonListResponse {
+    public function listPersons(PaginationRequest $request): PersonListResponse
+    {
         $result = new PersonListResponse($this->repository->countPersons(), $request->page());
         foreach ($this->repository->listPersons($request->limit(), $request->offset()) as $person) {
-            $result->addPerson($this->transformer->transform($person, $calculateFrom));
+            $result->addPerson($this->transformer->transform($person));
         }
 
         return $result;

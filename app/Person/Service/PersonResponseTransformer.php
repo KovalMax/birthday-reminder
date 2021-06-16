@@ -5,9 +5,8 @@ declare(strict_types=1);
 namespace BirthdayReminder\Person\Service;
 
 use BirthdayReminder\Person\Http\Response\PersonResponse;
-use BirthdayReminder\Person\Model\BirthdayInterval;
+use BirthdayReminder\Person\Model\IBirthdayInterval;
 use BirthdayReminder\Person\Model\Person;
-use DateTimeInterface;
 use DateTimeZone;
 use Exception;
 
@@ -19,26 +18,27 @@ final class PersonResponseTransformer
     private const TODAY_PART                 = ' today (%d hours remaining in %s)';
     private const UPCOMING_PART              = ' in %d months, %d days in %s';
 
-    public function __construct(private BirthdayCalculator $birthdayCalculator)
+    public function __construct(private ICalculator $birthdayCalculator)
     {
     }
-
 
     /**
      * @throws Exception
      */
-    public function transform(Person $person, ?DateTimeInterface $calculateFrom = null): PersonResponse
+    public function transform(Person $person): PersonResponse
     {
         $timezoneBirthday = $person->birthdayWithTimezone();
-        $interval = $this->birthdayCalculator->calculateBirthdayInterval($timezoneBirthday, $calculateFrom);
-        $reminder = $this->buildReminder($person->name, $timezoneBirthday->getTimezone(), $interval, $calculateFrom);
+        $reminder = $this->buildReminder(
+            $person->name,
+            $timezoneBirthday->getTimezone(),
+            $this->birthdayCalculator->calculateBirthdayInterval($timezoneBirthday)
+        );
 
         return new PersonResponse(
             $person->name,
             $person->birthday->format('Y-m-d'),
             $person->timezone,
-            $reminder,
-            $interval
+            ...$reminder
         );
     }
 
@@ -48,15 +48,14 @@ final class PersonResponseTransformer
     private function buildReminder(
         string $name,
         DateTimeZone $timezone,
-        BirthdayInterval $interval,
-        ?DateTimeInterface $calculateFrom = null
-    ): string {
-        return match ($interval->isBirthday()) {
+        IBirthdayInterval $interval
+    ): array {
+        $reminderMessage = match ($interval->isBirthday()) {
             true => $this->renderMessage(
                 self::BIRTHDAY_REMINDER_TEMPLATE . self::TODAY_PART,
                 $name,
                 $interval->age(),
-                $this->birthdayCalculator->hoursUntilTheEndOfDay($timezone, $calculateFrom),
+                $this->birthdayCalculator->hoursUntilTheEndOfDay($timezone),
                 $timezone->getName()
             ),
             false => $this->renderMessage(
@@ -68,6 +67,8 @@ final class PersonResponseTransformer
                 $timezone->getName()
             )
         };
+
+        return [$reminderMessage, $interval];
     }
 
     private function renderMessage(string $template, string|int ...$params): string

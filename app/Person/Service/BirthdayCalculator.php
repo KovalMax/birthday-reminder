@@ -10,16 +10,17 @@ use DateTimeInterface;
 use DateTimeZone;
 use Exception;
 
-final class BirthdayCalculator
+final class BirthdayCalculator implements ICalculator
 {
+    public function __construct(private IClock $clock)
+    {
+    }
+
     /**
      * @throws Exception
      */
-    public function calculateBirthdayInterval(
-        DateTimeInterface $birthday,
-        ?DateTimeInterface $calculateFrom = null
-    ): BirthdayInterval {
-        $now = $calculateFrom ?? new DateTime('now', $birthday->getTimezone());
+    public function calculateBirthdayInterval(DateTimeInterface $birthday): BirthdayInterval {
+        $now = $this->clock->now($birthday->getTimezone());
         $now = clone $now;
         // Reset time to 00:00 - to do all calculations based on day basis no need to involve time part
         $now->setTime(0, 0);
@@ -50,9 +51,9 @@ final class BirthdayCalculator
     /**
      * @throws Exception
      */
-    public function hoursUntilTheEndOfDay(DateTimeZone $timeZone, ?DateTimeInterface $calculateFrom = null): int
+    public function hoursUntilTheEndOfDay(DateTimeZone $timeZone): int
     {
-        $today = $calculateFrom ?? new DateTime('now', $timeZone);
+        $today = $this->clock->now($timeZone);
 
         $tomorrow = clone $today;
         $tomorrow->modify('tomorrow');

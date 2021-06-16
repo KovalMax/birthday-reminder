@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace BirthdayReminder\Person\Model;
 
-final class BirthdayInterval
+final class BirthdayInterval implements IBirthdayInterval
 {
     public function __construct(private int $months, private int $days, private int $age)
     {
